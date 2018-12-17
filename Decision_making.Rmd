@@ -1,0 +1,134 @@
+---
+title: "Numerical analysis"
+output:
+  html_document:
+    df_print: paged
+---
+```{r}
+#install.packages('combinat')
+library(combinat)
+```
+
+Using formula (1) for calculting probability of stategy Sn on N sequence, we create proper function
+```{r}
+Probability_of_Sn <- function(n,N){
+  k = N-1
+  p = (n/N)*sum(1/(n : k))
+  return (p)
+}
+Probability_of_Sn(1,4)
+```
+
+Here we create algorithms of stratege Sn (skip first n elements in sequence, and look for element that bigger than first n numbers )
+```{r}
+Sn_Algorithms_ <- function(n,c){
+  if(n == 0){
+    return(c[1])
+  }
+  for (number in c[-(1:n)]){
+    if (number > max(c[1:n])){
+      return(number)
+    }
+  }
+  return(tail(c, n = 1))
+}
+s=c(6,2,1,4)
+Sn_Algorithms_(2,s)
+
+```
+
+Function that represents success of choosing max element
+```{r}
+Desicion_sucess <- function(n,c){
+  result = Sn_Algorithms_(n,c)
+  if (result == max(c)){
+    return(1)
+  } else {
+    return(0)
+    }
+  
+}
+```
+
+
+Functions for calculating sample probability of success(with different conditions)
+```{r}
+probability <- function(n,N) {
+  sum = 0
+  for (i in 0:1000){
+    c = sample(N,N, replace = FALSE)
+    sum = sum + Desicion_sucess(n,c)
+  }
+  return (sum / 1000)
+}
+probability_replacement <- function(n,N) {
+  sum = 0
+  for (i in 0:1000){
+    c = sample(N,N, replace = T)
+    sum = sum + Desicion_sucess(n,c)
+  }
+  return (sum / 1000)
+}
+probability(1,4)
+```
+Find opimal n strategy for every sequence  N {1:20}
+```{r}
+r<-c(0)
+for ( i in 2:20){
+  n<-integer()
+  for (j in 0:i-1) {
+    n[j]<- Probability_of_Sn(j,i)
+  }
+  r[i]<-which(n==max(n))
+}
+r
+
+```
+
+Table for comparing our values
+```{r}
+theor_prob=integer()
+sample_prob=integer()
+sample_prob_replacement=integer()
+i=1
+for (j in r){
+  theor_prob[i]<-Probability_of_Sn(j,i)
+  sample_prob[i]<-probability(j,i)
+  sample_prob_replacement[i]<-probability_replacement(j,i)
+  i=i+1
+  
+}
+theor_prob[1] = 1
+data_p <-data.frame('N' = 1:20, 'Optimal n' = r, 'Theor_Prob' = theor_prob, 'Sample_Prob' = sample_prob,'Sample_Prob(Replacement)' = sample_prob_replacement)
+data_p
+```
+Here we calculate expectation of choise rank observing the permutations of sequence.(rank 1 - is the best)
+```{r}
+s <- integer()
+c <- integer()
+d <- integer()
+for (i in 1:8) {
+  n<-integer()
+  perm <- permn(sample(i,i, replace = FALSE))
+  for (j in 0:(i-1)){
+    E<-integer()
+    z=1
+    for(k in perm){
+      rank=Sn_Algorithms_(j,k)
+      E[z]=rank
+      z = z+1
+    }
+    n[j+1] = mean(E)
+  }
+  for(l in (1:length(n))){
+    if (n[l] == max(n)){
+      g = l
+    }
+  }
+  c[i] = g-1
+  d[i] = max(n)
+}
+data_e <- data.frame('N' = 1:8, 'n_that_maximimizes_choise_rank'= c,'Expected_rank' = d, 'n_for_optimal_best_choise'=r[1:8])
+data_e
+```
+In the most cases, n that makes our choise optimal for the best candidate, gives us the worst expectaion of  choise rank. 
